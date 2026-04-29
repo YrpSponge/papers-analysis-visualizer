@@ -96,7 +96,7 @@ Recommended additional fields:
 - 'community_label'
 
 Example input schema: 
-'/references/input_schema.md'
+```/references/input_schema.md```
 
 ### Optional Inputs
 
@@ -116,14 +116,176 @@ If historical data is not available:
 ### Main outputs: 
 ```output/paper_analysis_visualization.html``` containing:
 - interactive paper database/dashboard view
-- each paper
-- interactive keyword network
+- interactive keywords/topics network
 - topic trend chart area or section
 
-## Reasoning Flow
 
-## Tools Table
+### Optional static assets
+- ```output/figures/keyword_network.png```
+- ```output/figures/topic_trend.png```
+- ```output/figures/paper_overview.png```
 
-## Docs Table
+### Machine-readable output
+- ```shared_data/analytics_summary.json```
 
-## Output Rules
+
+---
+
+## Core Functions
+
+### 1. Paper Dashboard/Database View
+Build a notion-like paper database/dashboard.
+
+Each paper entry should display:
+
+- clickable paper title
+- recommendation index
+- relevance score
+- novelty score
+- concise one-line summary
+- keywords
+- optional category / cluster label
+
+Each entry should support interaction of:
+- clicking and navigate to the paper through URL
+
+
+The dashboard should support clear visual prioritization and quick scanning.
+
+### 2. Recommendation Index
+Generate a visual recommendation index for each paper.
+
+This index must be derived only from available input fields such as:
+
+- relevance score
+- novelty score
+- ranking position
+- optional additional computed signals
+
+The recommendation index may be shown as:
+
+- score badge
+- stars
+- heat color
+- other compact visual indicators
+
+The computation should be simple, interpretable, and reproducible.
+
+### 3. Keyword Network
+
+Build an interactive keyword co-occurrence network.
+
+Requirements:
+
+- show the most central / hottest keywords
+- clearly show the structure/correlation between keywords
+- visually enlarge more important keywords
+- support user zoom, drag, and pan
+- allow clicking a keyword to inspect its related papers or topic trend
+- keep labels concise and readable
+
+This network must be constructed only from the provided keyword data.
+
+
+### 4. Topic Trend View
+
+Provide a topic-level trend view.
+
+If historical data is available:
+
+show publication or attention trend over time for a selected keyword/topic
+
+If historical data is unavailable:
+
+- show only current-batch distribution or topic presence
+- do not claim a real temporal trend
+
+Trend visualization should remain lightweight and visually clear.
+
+---
+
+## Style Requirements
+
+- visual-first presentation: don't give too many complex literal presentation 
+- dominant UI text should follow the user's most recent language (example: use Chinese UI text if the user prompts in Chinese)
+- UI text should be concise and clear
+- academic terms, paper keywords, and topic names must remain in original English wording
+- avoid dense paragraphs
+- prioritize charts, cards, badges, and compact labels over long narrative text
+- the overall dashboard should support quick scanning and exploration
+
+---
+
+## Interaction Requirements
+
+### 1. Paper interactions
+- each paper entry must be clickable
+- clicking a paper opens the original paper link
+
+### 2. Keyword network interactions
+- support zoom
+- support drag
+- support pan
+- support hover or click for keyword inspection
+- once clicking a keyword, switch the keyword bubble to center peek page to show its related papers and topic trend
+
+### 3. Topic trend interactions
+- clicking a keyword should update or reveal the corresponding topic trend section
+- when possible, related papers under the selected topic should also be shown
+
+---
+
+## Language Policy
+
+- overall interface language: Follow the user's most recent input language
+- academic keywords, research topics, and paper terms: keep original wording
+- paper titles: keep original wording
+- concise UI labels may be written in Chinese
+
+---
+
+## Constraints
+
+### Data constraints
+- do not fabricate unsupported facts
+- all displayed information must come directly from input fields or be computed from them
+- do not introduce hidden metadata not present in the input
+
+### Content constraints
+- do not overload the page with large text blocks 
+- do not output verbose paper-by-paper essays inside the dashboard
+- do not translate academic terms such as CV, Agent, Skill into Chinese
+
+### UX constraints
+- keep text concise
+- keep visual hierarchy clear
+- prioritize readability and interactivity over - decorative complexity
+
+
+---
+
+## Failure/Fallback（后续有待改进）
+
+If paper fields are missing:
+
+- skip unsupported visual elements gracefully
+- preserve the rest of the dashboard if possible
+
+If historical data is missing:
+
+- disable true time-series trend mode
+- replace it with current topic distribution mode
+
+If keyword data is too sparse:
+
+- show a simplified keyword summary instead of a dense network
+
+---
+
+## Dependency
+
+
+
+---
+
+## Recommended Workflow
