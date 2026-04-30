@@ -1,93 +1,160 @@
 # Papers Analysis Visualizer
 
-将结构化论文分析结果转化为交互式可视化仪表盘的 agent skill。
+将结构化论文分析结果转化为 **Notion 论文知识库** + **交互式 Topic Exploration Dashboard** 的 agent skill。
 
-## 功能概述
+## 核心理念
 
-输入：排好序的论文列表，每篇附带 relevance/novelty 评分、一句话总结、关键词等信息。
+> **Notion 负责 paper collection / long-term knowledge management；网页负责 interactive topic exploration / hotspot discovery。**
 
-输出：一个自包含的 HTML 交互式仪表盘，包含三种联动视图：
+两条输出链路各司其职——Notion 用来长期积累、检索、管理论文；
+网页用来以交互可视化的方式帮助用户更好的了解topics/keywords之间的关联、新兴趋势等等。
 
-| 视图 | 说明 |
+## 输入
+
+上游 agent 输出的结构化论文列表（JSON），每篇包含：
+
+| 字段 | 说明 |
 |------|------|
-| 论文库仪表盘 | Notion 风格表格/卡片，展示推荐指数、关键词标签、一句话概括，可搜索过滤、点击查看详情 |
-| 关键词共现网络 | 力导向图，节点大小=频次，连线=共现关系，区分热点主题与新兴关键词，支持拖拽缩放 |
-| 话题趋势图 | 折线/柱状图，点击关键词网络节点后展示该主题的历年论文趋势 |
+| `paper_id` | 唯一标识 |
+| `title` | 论文标题 |
+| `url` | arXiv / 论文页面链接 |
+| `relevance_score` | 相关性分数 (0-10) |
+| `novelty_score` | 新颖性分数 (0-10) |
+| `one_line_summary` | 一句话概括 |
+| `keywords` | 关键词列表 |
+| `published_date` | 发布日期 |
+| `category` | arXiv 分类 |
+| `community_label` | 上游聚类标签 |
 
-技术路线：Python 3.11+（jinja2 + 标准库）做数据处理管线，ECharts 5.5+（CDN）做前端可视化，输出为浏览器直接可打开的单一 HTML 文件。
+详见 [references/input_schema.md](references/input_schema.md)。
 
----
+## 输出
 
-## 开发阶段
+### 1. Notion 论文库
 
-### 阶段一：初始化与设计 ✅
+每篇论文作为一条 database item 写入用户 Notion 空间，包含完整的 properties（分数、关键词、分类、推荐指数等），支持长期积累、检索、人工补注释。
 
-- [x] 项目骨架搭建（目录结构、文件占位）
-- [x] CLAUDE.md — Claude Code 协作指南
-- [x] SKILL.md — Skill 功能定义（输入/输出/核心功能/交互/约束）
-- [x] `references/input_schema.md` — 输入数据格式样例
+### 2. Topic Exploration Dashboard
 
-### 阶段二：核心实现 🚧
+自包含的交互式 HTML 页面，以 topic 关系为中心：
 
-- [ ] `references/output_schema.md` — 输出格式详细说明
-- [ ] `references/visualization_rules.md` — 可视化设计细则
-- [ ] `scripts/utils.py` — 共享工具（JSON 加载、schema 校验、归一化）
-- [ ] `scripts/compute_analytics.py` — 衍生数据计算（关键词频次、共现矩阵、逐年趋势、推荐指数）
-- [ ] `scripts/build_dashboard.py` — HTML 生成（jinja2 模板渲染、ECharts 配置嵌入）
-- [ ] `scripts/run_visualizer.py` — 管线入口（CLI 参数解析、编排 compute → build）
-- [ ] `assets/dashboard_template.html` — Jinja2 HTML 骨架模板
-- [ ] `assets/style.css` — 仪表盘样式
+| 区域 | 说明 |
+|------|------|
+| Overview 概览 | 论文总数、最热关键词、最活跃社区、高分论文数 |
+| Keyword Network 关键词网络 | 力导向图，节点=关键词，边=共现关系，热点突出，支持拖拽缩放 |
+| Topic Detail Panel | 点击关键词后展示：相关论文数、关联关键词、趋势图、推荐论文列表 |
+| Linked Papers Preview | 选中 topic 的论文卡片（title、推荐指数、一句话概括、arXiv 链接、Notion 跳转） |
 
-### 阶段三：测试
+## 技术栈
 
-- [ ] `tests/fixtures/summarized_papers_sample.json` — 测试用样例论文数据
-- [ ] `tests/test_compute_analytics.py` — 计算逻辑单元测试
-- [ ] `tests/test_build_dashboard.py` — HTML 生成测试
-- [ ] 路由测试 — 验证 LLM 在正确场景/边界内调用本 skill
-- [ ] 系统联调 — WorkBuddy 中端到端跑通（上游输入 → 本 skill → 下游渲染）
-
-### 阶段四：完善与优化
-
-- [ ] 配色方案确定（当前 ECharts 默认配色）
-- [ ] Failure/Fallback 逻辑（缺字段降级、数据稀疏简化视图）
-- [ ] 静态资源导出（关键词网络截图、趋势图 PNG）
-- [ ] 移动端响应式适配
-- [ ] 更多输入格式支持（CSV、BibTeX）
-
----
+- 管线：Python 3.11+ + jinja2，通过 Notion API 同步论文库
+- 前端：ECharts 5.5+ (CDN)，纯 CSS，数据内嵌至 HTML
+- 输出：自包含单一 HTML 文件（浏览器直接打开）+ Notion database
 
 ## 项目结构
 
 ```
 papers-analysis-visualizer/
-├── CLAUDE.md                     # Claude Code 协作指南
-├── SKILL.md                      # Skill 定义（agent 系统读取）
-├── README.md                     # 本文件
-├── scripts/                      # Python 源码
-│   ├── run_visualizer.py         # 管线入口
-│   ├── compute_analytics.py      # 衍生数据计算
-│   ├── build_dashboard.py        # HTML 生成
-│   └── utils.py                  # 共享工具
-├── assets/                       # 前端资源
-│   ├── dashboard_template.html   # Jinja2 HTML 骨架
-│   └── style.css                 # 仪表盘样式
-├── references/                   # 设计规范文档
-│   ├── input_schema.md           # 输入格式
-│   ├── output_schema.md          # 输出格式
-│   └── visualization_rules.md    # 可视化细则
-├── data/                         # 运行时输入数据
-├── output/                       # 生成的 HTML
-└── tests/                        # 测试
-    ├── test_compute_analytics.py
-    ├── test_build_dashboard.py
-    └── fixtures/
-        └── summarized_papers_sample.json
+├── SKILL.md                       # Skill 功能定义
+├── README.md                      # 本文件
+├── scripts/
+│   ├── run_visualizer.py          # 管线总入口
+│   ├── compute_analytics.py       # 衍生数据计算（recommendation、关键词频次、共现矩阵、趋势等）
+│   ├── build_dashboard_html.py    # HTML 生成（jinja2 渲染 + 数据内嵌）
+│   ├── sync_to_notion.py          # Notion API 同步
+│   └── utils.py                   # 共享工具
+├── templates/
+│   ├── dashboard.html             # Jinja2 HTML 骨架
+│   └── style.css                  # 仪表盘样式
+├── references/
+│   ├── input_schema.md            # 输入数据格式
+│   ├── output_schema.md           # 输出格式说明
+│   └── visualization_rules.md     # 可视化设计细则
+├── output/                        # 生成的 dashboard
+├── data/                          # 运行时输入数据
+└── tests/
+    ├── fixtures/
+    │   ├── sample_basic.json
+    │   ├── sample_missing_fields.json
+    │   └── sample_history.json
+    └── outputs/
 ```
 
----
+## Recommendation Score 公式
 
-## 协作说明
+```
+recommendation = 0.6 × relevance_score + 0.4 × novelty_score
+```
 
-- 对话语言：中文
-- 代码：Python（PEP 8 + type hints），JavaScript（camelCase，嵌入 HTML）
-- 学术术语不翻译（Agent、Skill、CV 等保持原文）
+简单、可解释，后续可扩展。
+
+## 开发阶段
+
+### 阶段一：数据契约与骨架 ✅
+
+- [x] 项目骨架搭建
+- [x] SKILL.md 功能定义
+- [x] 输入 schema 确定
+- [x] 实现规划定稿
+
+### 阶段二：Analytics Layer 🚧
+
+- [ ] `scripts/utils.py` — JSON 加载、schema 校验、归一化
+- [ ] `scripts/compute_analytics.py` — recommendation、关键词频次、共现矩阵、overview stats、topic-to-paper 映射
+- [ ] 无历史数据时的 fallback 逻辑
+
+### 阶段三：Dashboard Layer
+
+- [ ] `templates/dashboard.html` + `templates/style.css` — 页面骨架与样式
+- [ ] `scripts/build_dashboard_html.py` — jinja2 渲染 + 数据内嵌
+- [ ] Keyword network 交互（zoom/drag/pan/click）
+- [ ] Topic detail panel 联动
+- [ ] Linked papers preview
+
+### 阶段四：Notion Sync Layer
+
+- [ ] `scripts/sync_to_notion.py` — database 创建/更新、paper 去重同步
+- [ ] Notion API 配置（token + database ID，通过环境变量）
+- [ ] Dashboard 中 "Open in Notion" 跳转
+
+### 阶段五：CLI 与集成
+
+- [ ] `scripts/run_visualizer.py` — 总入口，串联全流程
+- [ ] 命令行参数：`--input`、`--output`、`--history`、`--sync-notion`
+- [ ] 与上游 agent 集成
+
+### 阶段六：测试
+
+- [ ] 测试 fixtures（正常 / 缺字段 / 含历史数据）
+- [ ] 单元测试（计算逻辑、HTML 生成、Notion 同步）
+- [ ] 端到端联调
+
+## 运行
+
+```bash
+# 仅生成 dashboard
+python scripts/run_visualizer.py --input data/input.json --output output/
+
+# 同时同步到 Notion
+python scripts/run_visualizer.py --input data/input.json --output output/ --sync-notion
+
+# 运行测试
+pytest tests/ -v
+```
+
+## 环境变量
+
+```bash
+# Notion 集成（可选，仅使用 --sync-notion 时需要）
+NOTION_API_TOKEN=your_integration_token
+NOTION_DATABASE_ID=your_database_id
+```
+
+## 关键约束
+
+1. 所有输出数据必须来自输入，**零编造**
+2. 学术术语/关键词 **永远不翻译成中文**
+3. 优先用图表呈现信息，避免文字堆砌
+4. 输出 HTML 必须自包含，浏览器直接打开可用
+5. 三个视图（网络、详情面板、论文预览）必须联动
+6. 没有历史数据时，不声称存在时间趋势，降级为当前分布
