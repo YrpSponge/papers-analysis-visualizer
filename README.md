@@ -96,7 +96,7 @@ recommendation = 0.6 × relevance_score + 0.4 × novelty_score
 - [x] SKILL.md 功能定义
 - [x] 输入 schema 确定
 - [x] 实现规划定稿
-
+- [ ] 测试notion API方不方便用
 ### 阶段二：Analytics Layer 🚧
 
 - [ ] `scripts/utils.py` — JSON 加载、schema 校验、归一化
