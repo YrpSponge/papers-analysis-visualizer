@@ -94,28 +94,29 @@ recommendation = 0.6 × relevance_score + 0.4 × novelty_score
 
 - [x] 项目骨架搭建
 - [x] SKILL.md 功能定义
-- [x] 输入 schema 确定
+- [x] 输入/输出 schema 确定
 - [x] 实现规划定稿
-- [ ] 测试notion API方不方便用
-### 阶段二：Analytics Layer 🚧
+- [x] Notion API 可行性验证
 
-- [ ] `scripts/utils.py` — JSON 加载、schema 校验、归一化
-- [ ] `scripts/compute_analytics.py` — recommendation、关键词频次、共现矩阵、overview stats、topic-to-paper 映射
-- [ ] 无历史数据时的 fallback 逻辑
+### 阶段二：Analytics Layer ✅
 
-### 阶段三：Dashboard Layer
+- [x] `scripts/compute_analytics.py` — recommendation、关键词频次、共现矩阵、overview stats
+- [x] 无历史数据时的 fallback 逻辑
+- [ ] `scripts/utils.py` — JSON 加载、schema 校验、归一化（待补充）
 
-- [ ] `templates/dashboard.html` + `templates/style.css` — 页面骨架与样式
-- [ ] `scripts/build_dashboard_html.py` — jinja2 渲染 + 数据内嵌
-- [ ] Keyword network 交互（zoom/drag/pan/click）
-- [ ] Topic detail panel 联动
-- [ ] Linked papers preview
+### 阶段三：Dashboard Layer ✅
 
-### 阶段四：Notion Sync Layer
+- [x] `templates/dashboard.html` — 页面骨架 + 内嵌 CSS + ECharts 交互
+- [x] `scripts/build_dashboard_html.py` — jinja2 渲染 + 数据内嵌
+- [x] Keyword network 交互（zoom/drag/pan/click）
+- [x] Topic detail panel 联动
+- [x] Linked papers preview（arXiv 链接 + Notion 跳转）
 
-- [ ] `scripts/sync_to_notion.py` — database 创建/更新、paper 去重同步
-- [ ] Notion API 配置（token + database ID，通过环境变量）
-- [ ] Dashboard 中 "Open in Notion" 跳转
+### 阶段四：Notion Sync Layer ✅
+
+- [x] `scripts/sync_to_notion.py` — database 自动创建、paper 去重同步
+- [x] Notion API 配置（token + page/database ID，通过 `.env`）
+- [x] Dashboard 中 "Open in Notion" 跳转
 
 ### 阶段五：CLI 与集成
 
@@ -125,18 +126,18 @@ recommendation = 0.6 × relevance_score + 0.4 × novelty_score
 
 ### 阶段六：测试
 
-- [ ] 测试 fixtures（正常 / 缺字段 / 含历史数据）
+- [x] 测试 fixtures（3 篇样例论文）
 - [ ] 单元测试（计算逻辑、HTML 生成、Notion 同步）
 - [ ] 端到端联调
 
 ## 运行
 
 ```bash
-# 仅生成 dashboard
-python scripts/run_visualizer.py --input data/input.json --output output/
+# 同步到 Notion（自动创建数据库 + 去重）
+python scripts/sync_to_notion.py --input data/input.json --output data/notion_mapping.json
 
-# 同时同步到 Notion
-python scripts/run_visualizer.py --input data/input.json --output output/ --sync-notion
+# 生成 Dashboard（自包含 HTML，浏览器直接打开）
+python scripts/build_dashboard_html.py --input data/input.json --output output/dashboard.html
 
 # 运行测试
 pytest tests/ -v
