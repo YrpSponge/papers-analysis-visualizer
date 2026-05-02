@@ -1,8 +1,8 @@
 [
   {
-    "paper_id": "arxiv:2501.12345",
+    "paper_id": "arxiv:1234.12345",
     "title": "Agentic Skill Discovery for ...",
-    "url": "https://arxiv.org/abs/2501.12345",
+    "url": "https://arxiv.org/abs/xxxxxxxxxx",
     "relevance_score": 8.9,
     "novelty_score": 7.8,
     "one_line_summary": "A framework for ...",

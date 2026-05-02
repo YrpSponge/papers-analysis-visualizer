@@ -1,0 +1,38 @@
+[
+  {
+    "paper_id": "arxiv:2501.01234",
+    "title": "Agentic Skill Discovery for Large Language Models",
+    "url": "https://arxiv.org/abs/2501.01234",
+    "relevance_score": 8.9,
+    "novelty_score": 7.8,
+    "one_line_summary": "A framework for automatically discovering and composing agent skills from LLMs without manual prompt engineering.",
+    "keywords": ["Agent", "Skill Discovery", "Tool Use", "LLM"],
+    "published_date": "2025-01-15",
+    "category": "cs.CL",
+    "community_label": "Agentic LLMs"
+  },
+  {
+    "paper_id": "arxiv:2502.05678",
+    "title": "Multi-Agent Collaboration via Structured Debate",
+    "url": "https://arxiv.org/abs/2502.05678",
+    "relevance_score": 9.2,
+    "novelty_score": 8.5,
+    "one_line_summary": "Proposes a structured debate protocol for multi-agent systems that improves reasoning accuracy by 23% over single-agent baselines.",
+    "keywords": ["Multi-Agent", "Debate", "Reasoning", "Collaboration"],
+    "published_date": "2025-02-20",
+    "category": "cs.AI",
+    "community_label": "Multi-Agent Systems"
+  },
+  {
+    "paper_id": "arxiv:2503.09012",
+    "title": "Retrieval-Augmented Tool Execution for Code Generation Agents",
+    "url": "https://arxiv.org/abs/2503.09012",
+    "relevance_score": 7.5,
+    "novelty_score": 9.1,
+    "one_line_summary": "Combines RAG with tool-augmented code generation, enabling agents to retrieve relevant API documentation before generating code.",
+    "keywords": ["RAG", "Code Generation", "Tool Execution", "Agent", "API"],
+    "published_date": "2025-03-10",
+    "category": "cs.SE",
+    "community_label": "Code Generation"
+  }
+]

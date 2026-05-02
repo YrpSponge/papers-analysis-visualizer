@@ -12,12 +12,13 @@ version: 1.0.0
 ## Purpose
 
 Use this skill to transform a ranked paper list into two interactive visualization modules:
-1. An interactive research database/dashboard for organized paper collection and convenient human browsing;
+1. An interactive research database/dashboard for organized paper collection and convenient human browsing in Notion via provided API;
 2. Interactive visualizations of macro information, including topic structures, keywords correlations and trends of certain topics.
 
 This skill focuses on:
-- collecting papers and corresponding information from certain sources(这里是不是应该明确一下从哪里获取什么？)
-- presenting papers in a notion-like database/dashboard format
+- receiving structured paper data from the upstream agent (search / summarization pipeline)
+- guiding users to set up Notion connections with this agent
+- presenting papers in a notion database via user provided API
 - highlighting recommended papers with concise, visual-first signals
 - showing keyword/topic structure through an interactive keyword network
 - showing topic-level trends when historical data is available
@@ -37,8 +38,8 @@ This skill is designed for users who want to quickly understand:
 Use this skill when the user asks for any of the following (or similar request):
 
 - a collection of recommended papers
-- a paper dashboard
-- a notion-like paper database
+- a paper dashboard/database
+- a notion paper database
 - an interactive paper browser
 - keyword network visualization
 - topic hotspot overview
@@ -48,8 +49,8 @@ Use this skill when the user asks for any of the following (or similar request):
 
 Typical requests include:
 - “帮我整理这些paper”
-- “帮我把这些 paper 做成一个 dashboard”
-- “给我一个像 Notion database 一样的论文整理页”
+- “帮我把这些 paper 整理进notion数据库”
+- “给我在Notion建一个论文整理库”
 - “展示关键词网络和热点主题”
 - “整理这个主题/关键词相关的主题/关键词”
 - “点开关键词后可以看趋势”
@@ -61,12 +62,13 @@ Typical requests include:
 
 Do not use this skill for:
 - fetching papers from arXiv
-- ranking papers from scratch
 - generating paper summaries from raw abstracts
 - writing the final daily report narrative
 - making claims with hallucinations that require information not present in the input data
+- setting up Notion Inner Connection or fetch API
 
 This skill does **not**:
+- set up Notion Inner Connection or fetch API for users
 - infer facts not supported by the input sources
 - perform deep full-paper analysis
 - fabricate author relations, topic evolution, or novelty claims
@@ -74,29 +76,93 @@ This skill does **not**:
 
 ---
 
+## User Setup（notion集成前置配置）
+
+If user requests Notion sync (save papers / create database), check whether `NOTION_API_TOKEN` and one of `NOTION_PARENT_PAGE_ID` / `NOTION_DATABASE_ID` are present in .env. 
+If not, reply with the guide below in the user's most recent language (不加额外解释，直接输出以下指导)：
+
+<div data-language="zh">
+你的 Notion 还没和 agent 关联。需要 3 步：
+
+**第 1 步：创建 Notion Integration**
+1. 打开 https://www.notion.so/my-integrations
+2. 点击「新建集成」(New Integration)
+3. 名称填 `Papers Analysis`，选择你的工作区
+4. 提交后复制 `Internal Integration Secret`（以 `ntn_` 或 `secret_` 开头）
+
+**第 2 步：准备 Notion 页面并授权**
+1. 在 Notion 中创建一个页面（或使用已有页面）作为论文库的父页面
+2. 打开该页面 → 右上角 `⋯` → 「连接」(Connections) → 搜索并添加 `Papers Analysis`
+3. 复制该页面的 URL 中的页面 ID（`https://www.notion.so/xxxxxxxxxxxxxxxx?v=...` 中 `xxxxxxxx` 那串，32 位）
+
+**第 3 步：配置到项目**
+在项目根目录的 `.env` 文件中写入：
+```
+NOTION_API_TOKEN=你的_Internal_Integration_Secret
+NOTION_PARENT_PAGE_ID=你的_页面_ID
+```
+
+完成后告诉我，我帮你验证连接。
+</div>
+
+<div data-language="en">
+Your Notion workspace hasn't been connected yet. 3 steps:
+
+**Step 1: Create a Notion Integration**
+1. Open https://www.notion.so/my-integrations
+2. Click "New Integration"
+3. Name it `Papers Analysis`, select your workspace
+4. Submit and copy the `Internal Integration Secret` (starts with `ntn_` or `secret_`)
+
+**Step 2: Prepare a Notion page and grant access**
+1. Create or use an existing page in Notion as the parent page for your paper database
+2. Open the page → top-right `⋯` → "Connections" → search and add `Papers Analysis`
+3. Copy the page ID from the URL (`https://www.notion.so/xxxxxxxxxxxxxxxx?v=...` — the 32-char `xxxxxxxx` part)
+
+**Step 3: Configure the project**
+In the project's `.env` file, add:
+```
+NOTION_API_TOKEN=your_internal_integration_secret
+NOTION_PARENT_PAGE_ID=your_page_id
+```
+
+Reply "done" and I'll verify the connection for you.
+</div>
+
+If the user reports issues during setup, assist with troubleshooting (check token format, verify Connections, confirm page ID).
+If the user chooses not to set up Notion, proceed with dashboard-only mode (skip Notion sync).
+
+---
+
 ## Inputs
 
 ### Required Inputs
 
-Input must include a ranked paper list.
+Input must include: 
 
-Each paper entry should contain at least the following information:
-- 'title'
-- 'url'
-- 'authors'
-- 'relevance_score'
-- 'novelty_score'
-- 'one_line_summary'
-- 'keywords'
+1. User's Notion Connection setup information:
+  - NOTION_API_TOKEN
+  - NOTION_PARENT_PAGE_ID or NOTION_DATABASE_ID
 
-Recommended additional fields:
-- 'paper_id'
-- 'published_date'
-- 'category'
-- 'community_label'
+2. A ranked paper list:
 
-Example input schema: 
-```/references/input_schema.md```
+  Each paper entry should contain at least the following information:
+  - 'paper_id'
+  - 'title'
+  - 'url'
+  - 'relevance_score'
+  - 'novelty_score'
+  - 'one_line_summary'
+  - 'keywords'
+
+  Recommended additional fields:
+  - 'authors'
+  - 'published_date'
+  - 'category'
+  - 'community_label'
+
+  Example input schema: 
+  ```/references/input_schema.md```
 
 ### Optional Inputs
 
@@ -113,94 +179,89 @@ If historical data is not available:
 
 ## Outputs
 
-### Main outputs: 
-```output/paper_analysis_visualization.html``` containing:
-- interactive paper database/dashboard view
-- interactive keywords/topics network
-- topic trend chart area or section
+### 1. Notion 论文库
 
+A Notion database created under the user's specified page. Each paper becomes a database item with the following properties:
 
-### Optional static assets
-- ```output/figures/keyword_network.png```
-- ```output/figures/topic_trend.png```
-- ```output/figures/paper_overview.png```
+| Property | Type | Source |
+|---|---|---|
+| Title | title | `title` |
+| URL | url | `url` |
+| Paper ID | rich_text | `paper_id` |
+| Relevance | number | `relevance_score` |
+| Novelty | number | `novelty_score` |
+| Recommendation | number | computed by `compute_analytics.py` |
+| Summary | rich_text | `one_line_summary` |
+| Keywords | multi_select | `keywords` |
+| Category | select | `category` |
+| Community | select | `community_label` |
+| Published Date | date | `published_date` |
+| Status | select | default `Unread` |
 
-### Machine-readable output
-- ```shared_data/analytics_summary.json```
+Output file: `data/notion_mapping.json` — `paper_id → notion_url` 映射，供 dashboard 做 "Open in Notion" 跳转。
 
+### 2. Topic Exploration Dashboard
+
+自包含的 HTML 文件 (`output/dashboard.html`)，浏览器直接打开。页面包含：
+
+- **Overview**：论文总数、最热关键词、最活跃社区、高分论文数
+- **Keyword Network**：力导向共现网络，节点大小 = 频次，边 = 共现关系，支持 zoom / drag / pan / click
+- **Topic Detail Panel**：点击关键词后展示相关论文数、关联关键词、趋势图、推荐论文列表
+- **Linked Papers Preview**：选中 topic 的论文卡片（title、推荐指数、一句话概括、arXiv 链接、Notion 跳转按钮）
+
+### 3. Machine-readable Output
+
+- `data/analytics_summary.json` — 总览统计 + 关键词频次 + 共现图数据
 
 ---
 
-## Core Functions
+## Available Tools
 
-### 1. Paper Dashboard/Database View
-Build a notion-like paper database/dashboard.
+本 skill 由两个tool脚本支持实现，agent 根据用户请求选择调用：
 
-Each paper entry should display:
+### Tool A: `sync_to_notion.py` — Notion 论文同步
 
-- clickable paper title
-- recommendation index
-- relevance score
-- novelty score
-- concise one-line summary
-- keywords
-- optional category / cluster label
+**触发条件**：用户提到"同步到 Notion""归档论文""创建论文库""保存到 Notion""整理进notion"等。
 
-Each entry should support interaction of:
-- clicking and navigate to the paper through URL
+**前置条件**：`.env` 中已配置 `NOTION_API_TOKEN` + `NOTION_PARENT_PAGE_ID` 或 `NOTION_DATABASE_ID`。未配置时先执行 User Setup 流程。
 
+**输入**：论文 JSON 文件路径（`--input`）
 
-The dashboard should support clear visual prioritization and quick scanning.
+**行为**：在 Notion 创建/更新数据库条目，按 `paper_id` 去重（已存在则更新，不存在则新建）。若 `NOTION_DATABASE_ID` 未设置，自动在父页面下创建数据库。
 
-### 2. Recommendation Index
-Generate a visual recommendation index for each paper.
+**输出**：`data/notion_mapping.json`（`--output`）
 
-This index must be derived only from available input fields such as:
+**CLI**：
+```bash
+python scripts/sync_to_notion.py --input data/input.json --output data/notion_mapping.json
+```
 
-- relevance score
-- novelty score
-- ranking position
-- optional additional computed signals
+### Tool B: `build_dashboard_html.py` — 交互式 Topic Dashboard
 
-The recommendation index may be shown as:
+**触发条件**：用户提到"可视化""关键词网络""趋势图""dashboard""探索""浏览论文""图形界面"等。
 
-- score badge
-- stars
-- heat color
-- other compact visual indicators
+**输入**：论文 JSON + 可选历史数据 + 可选 `notion_mapping.json`（有则渲染 Notion 跳转按钮）
 
-The computation should be simple, interpretable, and reproducible.
+**输出**：`output/dashboard.html`（自包含，浏览器直接打开）
 
-### 3. Keyword Network
+**CLI**：
+```bash
+python scripts/build_dashboard_html.py --input data/input.json --output output/dashboard.html
+```
 
-Build an interactive keyword co-occurrence network.
+### Arrangement Rules
 
-Requirements:
+```
+上游论文 JSON
+  → compute_analytics.enrich_papers()  ← 计算 recommendation 等衍生字段
+    ├─ sync_to_notion.py               ← 用户要求同步时执行
+    └─ build_dashboard_html.py         ← 用户要求可视化时执行
+```
 
-- show the most central / hottest keywords
-- clearly show the structure/correlation between keywords
-- visually enlarge more important keywords
-- support user zoom, drag, and pan
-- allow clicking a keyword to inspect its related papers or topic trend
-- keep labels concise and readable
-
-This network must be constructed only from the provided keyword data.
-
-
-### 4. Topic Trend View
-
-Provide a topic-level trend view.
-
-If historical data is available:
-
-show publication or attention trend over time for a selected keyword/topic
-
-If historical data is unavailable:
-
-- show only current-batch distribution or topic presence
-- do not claim a real temporal trend
-
-Trend visualization should remain lightweight and visually clear.
+Agent 根据用户的一句话请求决定执行哪个（或两者都跑）：
+- "帮我梳理这些论文" → 两者都跑
+- "归档/同步到 Notion" → 只跑 Tool A
+- "给我看关键词网络" → 只跑 Tool B
 
 ---
 
@@ -264,28 +325,59 @@ Trend visualization should remain lightweight and visually clear.
 
 ---
 
-## Failure/Fallback（后续有待改进）
+## Failure/Fallback
 
-If paper fields are missing:
+### 数据质量问题
+- 论文字段缺失：跳过不支持的图表元素，保留其余 dashboard
+- 历史数据缺失：禁用真实时间序列模式，降级为当前 topic 分布
+- 关键词数据过于稀疏：展示简化关键词摘要，不渲染密集网络
 
-- skip unsupported visual elements gracefully
-- preserve the rest of the dashboard if possible
+### Notion API 异常
+- Token 无效或过期：提示用户检查 `.env` 中的 `NOTION_API_TOKEN`
+- Integration 未关联父页面：提示用户检查页面 Connections 设置
+- API 限流 (429)：自动重试 3 次，间隔递增（1s / 3s / 5s）；仍失败则跳过该条目继续后续
+- 网络超时：打印错误信息，继续处理剩余论文，最后汇总失败条目
 
-If historical data is missing:
-
-- disable true time-series trend mode
-- replace it with current topic distribution mode
-
-If keyword data is too sparse:
-
-- show a simplified keyword summary instead of a dense network
+### 通用降级原则
+- 任一 Tool 失败不影响另一 Tool（sync 失败不阻止 dashboard 生成，反之亦然）
+- 所有错误输出到 stderr，不影响 stdout 的 pipeline 串联
 
 ---
 
 ## Dependency
 
+- Python 3.11+
+- `requests` — Notion API 调用
+- `python-dotenv` — 读取 `.env` 凭据
+- `jinja2` — HTML 模板渲染
+- `pytest` — 测试
 
+```bash
+pip install requests python-dotenv jinja2 pytest
+```
 
 ---
 
 ## Recommended Workflow
+
+### 首次使用（用户侧一次性配置）
+
+1. 创建 Notion Integration → 获取 token
+2. 准备 Notion 父页面 → 添加 integration 到 Connections
+3. 将 token 和页面 ID 写入 `.env`
+
+### 每次使用（Agent 自动执行）
+
+```
+1. 上游 agent 产出论文 JSON
+2. compute_analytics.enrich_papers() 计算衍生字段
+3. sync_to_notion.py 同步到 Notion（用户要求时）
+4. build_dashboard_html.py 生成 dashboard.html（用户要求时）
+5. 用户浏览器打开 dashboard.html 探索
+```
+
+### 日常使用
+
+- 每日论文 batch 追加同步到同一 Notion 数据库（`paper_id` 自动去重）
+- Dashboard 每次生成最新的独立 HTML
+- `notion_mapping.json` 随每次 sync 更新，dashboard 自动读取最新的 Notion 链接
