@@ -164,6 +164,25 @@ Input must include:
   Example input schema: 
   ```/references/input_schema.md```
 
+### Input Adaptation（llm驱动）
+
+上游（paper_summarizer）输出的 `shared_data/summarized_papers.json` 格式与本 skill 期望格式有差异。agent 在传入脚本前，需按以下规则就地转换：
+
+**1. 解包信封**：如果输入是 `{count, papers: [...]}` 结构 → 只取 `papers` 数组。
+
+**2. 字段映射**：
+| 上游字段 | 目标字段 | 转换规则 |
+|---------|---------|---------|
+| `arxiv_url` | `url` | 直接复制 |
+| `arxiv_id`（如 `2308.08155`） | `paper_id` | 加前缀 `arxiv:` → `arxiv:2308.08155` |
+| （缺失） | `published_date` | 留空字符串 `""` |
+| （缺失） | `category` | 留空字符串 `""` |
+| （缺失） | `community_label` | 留空字符串 `""` |
+
+**3. 保留已有字段**：`title`、`relevance_score`、`novelty_score`、`one_line_summary`、`keywords` 字段名一致，原样保留。
+
+转换后的 `[{paper_id, url, ...}]` 数组写入临时 JSON，再传入 `--input`。
+
 ### Optional Inputs
 
 Historical data may be provided for real trend analysis.
