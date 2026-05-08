@@ -79,7 +79,7 @@ This skill does **not**:
 ## User Setup（notion集成前置配置）
 
 If user requests Notion sync (save papers / create database), check whether `NOTION_API_TOKEN` and one of `NOTION_PARENT_PAGE_ID` / `NOTION_DATABASE_ID` are present in .env. 
-If not, reply with the guide below in the user's most recent language (不加额外解释，直接输出以下指导)：
+If not, reply with the guide below in the user's most recent language (不加额外解释，直接输出以下指导，触发总Agent的交互功能（如果支持的话）像用户提问，让用户在选择/输入中)：
 
 <div data-language="zh">
 你的 Notion 还没和 agent 关联。需要 3 步：
