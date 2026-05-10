@@ -120,15 +120,15 @@ recommendation = 0.6 × relevance_score + 0.4 × novelty_score
 
 ### 阶段五：CLI 与集成
 
-- [ ] `scripts/run_visualizer.py` — 总入口，串联全流程
-- [ ] 命令行参数：`--input`、`--output`、`--history`、`--sync-notion`
-- [ ] 与上游 agent 集成
+- [x] `scripts/run_visualizer.py` — 总入口，串联全流程
+- [x] 命令行参数：`--input`、`--output`、`--history`、`--sync-notion`
+- [x] 与上游 agent 集成
 
 ### 阶段六：测试
 
 - [x] 测试 fixtures（3 篇样例论文）
-- [ ] 单元测试（计算逻辑、HTML 生成、Notion 同步）
-- [ ] 端到端联调
+- [x] 单元测试（计算逻辑、HTML 生成、Notion 同步）
+- [x] 端到端联调
 
 ## 运行
 

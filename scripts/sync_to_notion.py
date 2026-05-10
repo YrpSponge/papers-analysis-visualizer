@@ -31,12 +31,12 @@ BASE_URL = "https://api.notion.com/v1"
 
 
 # 数据库管理
-def create_paper_database():
+def create_paper_database(title="论文库"):
     """在父页面下创建论文数据库，返回 database_id。"""
     url = f"{BASE_URL}/databases"
     payload = {
         "parent": {"type": "page_id", "page_id": PARENT_PAGE_ID},
-        "title": [{"text": {"content": "论文库"}}],
+        "title": [{"text": {"content": title}}],
         "properties": {
             "Title": {"title": {}},
             "URL": {"url": {}},
@@ -210,6 +210,8 @@ def main():
     parser.add_argument("--input", required=True, help="输入 JSON 文件路径")
     parser.add_argument("--output", default="data/notion_mapping.json",
                         help="输出 paper_id→notion_url 映射文件路径")
+    parser.add_argument("--db-title", default=None,
+                        help="Notion 数据库标题（不传则默认为「论文库」）")
     args = parser.parse_args()
 
     # 加载论文数据
@@ -218,8 +220,11 @@ def main():
     papers = enrich_papers(raw_papers)  # 计算 recommendation 等衍生字段
     print(f"[Load] 加载 {len(papers)} 篇论文（已加工）")
 
+    # 确定数据库标题
+    db_title = args.db_title or "论文库"
+
     # 获取或创建数据库
-    database_id = get_or_create_database()
+    database_id = get_or_create_database(title=db_title)
 
     # 同步
     mapping = sync_papers(database_id, papers)

@@ -78,34 +78,67 @@ This skill does **not**:
 
 ## User Setup（notion集成前置配置）
 
-If user requests Notion sync (save papers / create database), check whether `NOTION_API_TOKEN` and one of `NOTION_PARENT_PAGE_ID` / `NOTION_DATABASE_ID` are present in .env. 
-If not, reply with the guide below in the user's most recent language (不加额外解释，直接输出以下指导，触发总Agent的交互功能（如果支持的话）像用户提问，让用户在选择/输入中)：
+**每次启动本 skill 时，主动询问用户是否需要 Notion 同步。** 用对应语言向用户提问，等他回复。
 
 <div data-language="zh">
-你的 Notion 还没和 agent 关联。需要 3 步：
+🔗 是否需要将这批论文同步到你的 Notion 论文库？（可以长期积累、随时检索）
+
+- 如果 **需要**：请先完成 3 步配置 →
+- 如果 **不需要**：直接生成 Dashboard，跳过 Notion
+
+---
+
+**配置步骤（一次性，3 min）：**
 
 **第 1 步：创建 Notion Integration**
 1. 打开 https://www.notion.so/my-integrations
-2. 点击「新建集成」(New Integration)
-3. 名称填 `Papers Analysis`，选择你的工作区
-4. 提交后复制 `Internal Integration Secret`（以 `ntn_` 或 `secret_` 开头）
+2. 点击「新建集成」→ 名称填 `Papers Analysis` → 选择你的工作区 → 提交
+3. 复制 `Internal Integration Secret`
 
-**第 2 步：准备 Notion 页面并授权**
-1. 在 Notion 中创建一个页面（或使用已有页面）作为论文库的父页面
-2. 打开该页面 → 右上角 `⋯` → 「连接」(Connections) → 搜索并添加 `Papers Analysis`
-3. 复制该页面的 URL 中的页面 ID（`https://www.notion.so/xxxxxxxxxxxxxxxx?v=...` 中 `xxxxxxxx` 那串，32 位）
+**第 2 步：准备父页面并授权**
+1. 在 Notion 中新建或选择一个页面作为论文库
+2. 点右上角 `⋯` → 「连接」→ 添加 `Papers Analysis`
+3. 复制页面 URL 中的 ID（32 位字符串）
 
-**第 3 步：配置到项目**
+**第 3 步：写入配置**
 在项目根目录的 `.env` 文件中写入：
 ```
-NOTION_API_TOKEN=你的_Internal_Integration_Secret
+NOTION_API_TOKEN=你的_token
 NOTION_PARENT_PAGE_ID=你的_页面_ID
 ```
 
-完成后告诉我，我帮你验证连接。
+完成后告诉我，我先帮你验证连通性。
 </div>
 
 <div data-language="en">
+🔗 Do you want to sync these papers to your Notion database for long-term management?
+
+- **Yes**: I'll guide you through a one-time 3-step setup
+- **No**: I'll skip Notion and only generate the dashboard
+
+---
+
+**Setup (one-time, ~3 min):**
+
+**Step 1: Create Notion Integration**
+1. Go to https://www.notion.so/my-integrations
+2. Click "New Integration" → name it `Papers Analysis` → select workspace → Submit
+3. Copy the `Internal Integration Secret`
+
+**Step 2: Prepare parent page and grant access**
+1. Create or choose a page in Notion as your paper database home
+2. Click `⋯` → "Connections" → add `Papers Analysis`
+3. Copy the page ID from the URL (32-char string)
+
+**Step 3: Write config**
+Add to `.env` in project root:
+```
+NOTION_API_TOKEN=your_token
+NOTION_PARENT_PAGE_ID=your_page_id
+```
+
+Reply "done" and I'll verify the connection for you.
+</div>
 Your Notion workspace hasn't been connected yet. 3 steps:
 
 **Step 1: Create a Notion Integration**
@@ -248,11 +281,16 @@ Output file: `data/notion_mapping.json` — `paper_id → notion_url` 映射，�
 
 **行为**：在 Notion 创建/更新数据库条目，按 `paper_id` 去重（已存在则更新，不存在则新建）。若 `NOTION_DATABASE_ID` 未设置，自动在父页面下创建数据库。
 
+**数据库命名**：根据用户原始 query 推断一个简短的中文标题，通过 `--db-title` 传入。例如：
+- 用户说"我想了解 LLM Agent 相关论文" → `--db-title "LLM Agent 论文"`
+- 用户说"帮我看 MCP 的 paper" → `--db-title "MCP 论文"`
+- 未指定主题 → 默认 `"论文库"`
+
 **输出**：`data/notion_mapping.json`（`--output`）
 
 **CLI**：
 ```bash
-python scripts/sync_to_notion.py --input data/input.json --output data/notion_mapping.json
+python scripts/sync_to_notion.py --input data/input.json --output data/notion_mapping.json --db-title "LLM Agent 论文"
 ```
 
 ### Tool B: `build_dashboard_html.py` — 交互式 Topic Dashboard
