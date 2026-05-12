@@ -69,15 +69,15 @@ def create_paper_database(title="论文库"):
     return db_id
 
 
-def get_or_create_database():
+def get_or_create_database(title="论文库"):
     """获取数据库 ID：已有则直接用，否则自动创建。"""
 
     if NOTION_DATABASE_ID:
         print(f"[DB] 使用已有数据库: {NOTION_DATABASE_ID}")
         return NOTION_DATABASE_ID
     if PARENT_PAGE_ID:
-        print("[DB] 未检测到 NOTION_DATABASE_ID，将在父页面下自动创建...")
-        db_id = create_paper_database()
+        print(f"[DB] 未检测到 NOTION_DATABASE_ID，将在父页面下自动创建「{title}」...")
+        db_id = create_paper_database(title)
         print(f"[DB] 创建成功！请将以下内容加入 .env 以便复用：")
         print(f"     NOTION_DATABASE_ID={db_id}")
         return db_id
